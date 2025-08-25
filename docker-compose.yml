@@ -1,0 +1,41 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - db
+      - redis
+  worker:
+    build: .
+    command: celery -A medscheduler worker -l info
+    env_file: .env
+    depends_on:
+      - web
+      - redis
+      - db
+  beat:
+    build: .
+    command: celery -A medscheduler beat -l info
+    env_file: .env
+    depends_on:
+      - web
+      - redis
+      - db
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: medscheduler
+      POSTGRES_USER: meduser
+      POSTGRES_PASSWORD: medpass
+    ports:
+      - "5433:5433"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
